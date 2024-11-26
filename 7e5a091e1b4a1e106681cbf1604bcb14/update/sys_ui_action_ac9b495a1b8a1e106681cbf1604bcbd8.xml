@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update sys_domain="global" table="sys_ui_action">
+    <sys_ui_action action="INSERT_OR_UPDATE">
+        <action_name>create_deduplication_task</action_name>
+        <active>true</active>
+        <client>true</client>
+        <client_script_v2><![CDATA[function onClick(g_form) {
+
+}]]></client_script_v2>
+        <comments/>
+        <condition/>
+        <form_action>false</form_action>
+        <form_button>false</form_button>
+        <form_button_v2>false</form_button_v2>
+        <form_context_menu>false</form_context_menu>
+        <form_link>false</form_link>
+        <form_menu_button_v2>false</form_menu_button_v2>
+        <form_style/>
+        <format_for_configurable_workspace>false</format_for_configurable_workspace>
+        <hint/>
+        <isolate_script>true</isolate_script>
+        <list_action>true</list_action>
+        <list_banner_button>true</list_banner_button>
+        <list_button>false</list_button>
+        <list_choice>false</list_choice>
+        <list_context_menu>false</list_context_menu>
+        <list_link>false</list_link>
+        <list_save_with_form_button>false</list_save_with_form_button>
+        <list_style/>
+        <messages/>
+        <name>Create De-Duplication Task</name>
+        <onclick>getConfigItems()</onclick>
+        <order>100</order>
+        <script><![CDATA[function getConfigItems() {
+	var sys_ids = g_list.getChecked().toString();
+	var sys_id_list = sys_ids.split(",");
+	var ci_names = [];
+
+	try {
+		if(sys_id_list.length > 1) {
+			var ciGr = new GlideRecord('cmdb_ci');
+			ciGr.addQuery('sys_id', 'IN', sys_id_list);
+			ciGr.query();
+
+			while(ciGr.next()) {
+				var res = ciGr.name.toString().trim() || ciGr.serial_number.toString().trim() || ciGr.sys_id.toString().trim();
+				ci_names.push(res);
+			}
+
+			var confirmationMessage = 'Selected CI\'s (' + sys_id_list.length + '):\n\n';
+			confirmationMessage += ci_names.join('\n');
+			confirmationMessage += '\n\nClick OK to create de-duplication task for these CI\'s.';
+
+			var con0 = confirm(confirmationMessage);
+
+			if(con0) {
+				var ga = new GlideAjax('CMDBDeduplicationTaskUtils');
+				ga.addParam('sysparm_name', 'createDeduplicationTask');
+				ga.addParam('sysparm_sysids', sys_ids);
+				ga.getXML(function(response) {
+					var answer = response.responseXML.documentElement.getAttribute('answer');
+
+					if(answer == null) {
+						alert('Failed to create De-duplication task. Selected CI\'s are already included in an open De-Duplication task!');
+					} else {
+						var uri = 'reconcile_duplicate_task.do?sys_id=' + answer;
+						var con1 = confirm('The De-duplication task has been created. Click OK to view the task record.');
+
+						if(con1) location.href= uri;
+					}
+				});
+			}
+		} else {
+			alert('You must select at least two CI\'s!');
+		}
+	} catch(e) {
+		alert('An error has occurred. Pleaese contact your administrator\n\n' + JSON.stringify(e.message));
+	}
+}]]></script>
+        <show_insert>true</show_insert>
+        <show_multiple_update>false</show_multiple_update>
+        <show_query>false</show_query>
+        <show_update>true</show_update>
+        <sys_class_name>sys_ui_action</sys_class_name>
+        <sys_created_by>B0BWB</sys_created_by>
+        <sys_created_on>2024-11-25 16:05:43</sys_created_on>
+        <sys_domain>global</sys_domain>
+        <sys_domain_path>/</sys_domain_path>
+        <sys_id>ac9b495a1b8a1e106681cbf1604bcbd8</sys_id>
+        <sys_mod_count>20</sys_mod_count>
+        <sys_name>Create De-Duplication Task</sys_name>
+        <sys_overrides/>
+        <sys_package display_value="Deduplicate Task UI Action" source="7e5a091e1b4a1e106681cbf1604bcb14">7e5a091e1b4a1e106681cbf1604bcb14</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="Deduplicate Task UI Action">7e5a091e1b4a1e106681cbf1604bcb14</sys_scope>
+        <sys_update_name>sys_ui_action_ac9b495a1b8a1e106681cbf1604bcbd8</sys_update_name>
+        <sys_updated_by>B0BWB</sys_updated_by>
+        <sys_updated_on>2024-11-26 14:21:49</sys_updated_on>
+        <table>cmdb_ci</table>
+        <ui11_compatible>true</ui11_compatible>
+        <ui16_compatible>false</ui16_compatible>
+    </sys_ui_action>
+    <sys_es_latest_script action="INSERT_OR_UPDATE">
+        <id>ac9b495a1b8a1e106681cbf1604bcbd8</id>
+        <sys_created_by>B0BWB</sys_created_by>
+        <sys_created_on>2024-11-25 16:05:43</sys_created_on>
+        <sys_id>32acc1561bca1e106681cbf1604bcbc9</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_updated_by>B0BWB</sys_updated_by>
+        <sys_updated_on>2024-11-25 16:05:43</sys_updated_on>
+        <table>sys_ui_action</table>
+        <use_es_latest>false</use_es_latest>
+    </sys_es_latest_script>
+</record_update>
