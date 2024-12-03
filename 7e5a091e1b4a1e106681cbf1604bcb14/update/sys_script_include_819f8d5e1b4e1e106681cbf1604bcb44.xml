@@ -9,76 +9,118 @@
         <mobile_callable>false</mobile_callable>
         <name>CMDBDeduplicationTaskUtils</name>
         <sandbox_callable>false</sandbox_callable>
-        <script><![CDATA[var CMDBDeduplicationTaskUtils = Class.create();
+        <script><![CDATA[/**
+ * Utility class for handling CMDB deduplication tasks.
+ * @class
+ */
+var CMDBDeduplicationTaskUtils = Class.create();
+
 CMDBDeduplicationTaskUtils.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
-	createDeduplicationTask: function(arr_sys_ids) {
-		try {
-			const entries = JSUtil.nil(arr_sys_ids) ? this.getParameter('sysparm_sysids') : arr_sys_ids;
-			const ci_classes = this._getSelectedCIClasses(entries.split(','));
-			const dupTaskUtil = new CMDBDuplicateTaskUtils();
-			const deDupTaskID = dupTaskUtil.createDuplicateTask(entries);
-			
-			this._updateDeduplicationTask(deDupTaskID, ci_classes);
-			
-			return deDupTaskID;
-		} catch(e) {
-			gs.error('CMDBDeduplicationTaskUtils[createDeduplicationTask]: ' + e);
-		}
-	},
+    /**
+     * Creates a deduplication task for the given array of system IDs.
+     * If the system IDs belong to different classes, the task creation will fail.
+     *
+     * @param {Array<string>} arr_sys_ids - An array of system IDs to deduplicate.
+     * @returns {string} A JSON string representing the result of the task creation, including status and response message.
+     */
+    createDeduplicationTask: function(arr_sys_ids) {
+        try {
+            let res = {
+                'status': 400,
+                'response': ''
+            };
+            const entries = JSUtil.nil(arr_sys_ids) ? this.getParameter('sysparm_sysids') : arr_sys_ids;
+            const ci_classes = this._getSelectedCIClasses(entries.split(','));
+            const unique_arr = ci_classes.filter((c, index) => {
+                return ci_classes.indexOf(c) === index;
+            });
 
-	_updateDeduplicationTask: function(str_sys_id, arr_classes) {
-		var debug = true;
+            if (unique_arr.length > 1) {
+                res.response = "Failed to create De-duplication task. Selected CI's must be of the same class!";
+            } else {
+                const dupTaskUtil = new CMDBDuplicateTaskUtils();
+                const deDupTaskID = dupTaskUtil.createDuplicateTask(entries);
 
-		try {
-			const task = JSUtil.nil(str_sys_id) ? this.getParameter('sysparm_sysid') : str_sys_id;
-			const class_arr = JSUtil.nil(arr_classes) ? this.getParameter('sysparm_classes'): arr_classes;
-			const unique_arr = class_arr.filter((c, index) => {
-				return class_arr.indexOf(c) === index;
-			});
-			const case_class = unique_arr.length > 1 ? 'classes' : 'class';
-			const short_desc = 'Duplicate records found in ' + unique_arr.length + ' ' + case_class + ': ' + unique_arr.join(',');
+                if (deDupTaskID) {
+                    this._updateDeduplicationTask(deDupTaskID, ci_classes);
+                    res.status = 200;
+                    res.response = deDupTaskID;
+                } else {
+                    res.response = "Failed to create De-duplication task. Selected CI's are already included in an open De-Duplication task!";
+                }
+            }
 
-			var deDupGr = new GlideRecord('reconcile_duplicate_task');
-			deDupGr.get(task);
-			deDupGr.setValue('short_description', short_desc);
-			deDupGr.update();
-		} catch(e) {
-			gs.error('CMDBDeduplicationTaskUtils[updateDeduplicationTask]: ' + e);
-		}
-	},
+            return JSON.stringify(res);
+        } catch (e) {
+            gs.error('CMDBDeduplicationTaskUtils[createDeduplicationTask]: ' + e);
+        }
+    },
 
-	_getSelectedCIClasses: function(arr_sys_ids) {
-		try {
-			let res = [];
-			const entries = JSUtil.nil(arr_sys_ids) ? this.getParameter('sysparm_sysids') : arr_sys_ids;
+    /**
+     * Updates an existing deduplication task with the given task ID and class array.
+     *
+     * @param {string} str_task_id - The ID of the deduplication task to update.
+     * @param {Array<string>} arr_classes - An array of classes associated with the task.
+     */
+    _updateDeduplicationTask: function(str_task_id, arr_classes) {
+        var debug = true;
 
-			entries.forEach(entry => {			
-				var cmdbGr = new GlideRecord('cmdb_ci');
-				cmdbGr.get(entry);
+        try {
+            const task = JSUtil.nil(str_task_id) ? this.getParameter('sysparm_taskid') : str_task_id;
+            const class_arr = JSUtil.nil(arr_classes) ? this.getParameter('sysparm_classes') : arr_classes;
+            const unique_arr = class_arr.filter((c, index) => {
+                return class_arr.indexOf(c) === index;
+            });
+            const case_class = unique_arr.length > 1 ? 'classes' : 'class';
+            const short_desc = 'Duplicate records found in ' + unique_arr.length + ' ' + case_class + ': ' + unique_arr.join(',');
 
-				res.push(cmdbGr.sys_class_name.getDisplayValue());
-			});
+            var deDupGr = new GlideRecord('reconcile_duplicate_task');
+            deDupGr.get(task);
+            deDupGr.setValue('short_description', short_desc);
+            deDupGr.update();
+        } catch (e) {
+            gs.error('CMDBDeduplicationTaskUtils[updateDeduplicationTask]: ' + e);
+        }
+    },
 
-			return res;
-		} catch(e) {
-			gs.error('CMDBDeduplicationTaskUtils[getSelectedCIClasses]: ' + e);
-		}
-	}, 
-	
+    /**
+     * Retrieves the classes of configuration items (CIs) based on the given system IDs.
+     *
+     * @param {Array<string>} arr_sys_ids - An array of system IDs for which to retrieve CI classes.
+     * @returns {Array<string>} An array of CI class names.
+     */
+    _getSelectedCIClasses: function(arr_sys_ids) {
+        try {
+            let res = [];
+            const entries = JSUtil.nil(arr_sys_ids) ? this.getParameter('sysparm_sysids') : arr_sys_ids;
+
+            entries.forEach(entry => {            
+                var cmdbGr = new GlideRecord('cmdb_ci');
+                cmdbGr.get(entry);
+
+                res.push(cmdbGr.sys_class_name.getDisplayValue());
+            });
+
+            return res;
+        } catch (e) {
+            gs.error('CMDBDeduplicationTaskUtils[getSelectedCIClasses]: ' + e);
+        }
+    },
+
     type: 'CMDBDeduplicationTaskUtils'
 });]]></script>
         <sys_class_name>sys_script_include</sys_class_name>
         <sys_created_by>B0BWB</sys_created_by>
         <sys_created_on>2024-11-25 16:21:31</sys_created_on>
         <sys_id>819f8d5e1b4e1e106681cbf1604bcb44</sys_id>
-        <sys_mod_count>17</sys_mod_count>
+        <sys_mod_count>30</sys_mod_count>
         <sys_name>CMDBDeduplicationTaskUtils</sys_name>
         <sys_package display_value="Deduplicate Task UI Action" source="7e5a091e1b4a1e106681cbf1604bcb14">7e5a091e1b4a1e106681cbf1604bcb14</sys_package>
         <sys_policy/>
         <sys_scope display_value="Deduplicate Task UI Action">7e5a091e1b4a1e106681cbf1604bcb14</sys_scope>
         <sys_update_name>sys_script_include_819f8d5e1b4e1e106681cbf1604bcb44</sys_update_name>
         <sys_updated_by>B0BWB</sys_updated_by>
-        <sys_updated_on>2024-12-03 15:23:33</sys_updated_on>
+        <sys_updated_on>2024-12-03 16:53:06</sys_updated_on>
     </sys_script_include>
     <sys_es_latest_script action="INSERT_OR_UPDATE">
         <id>819f8d5e1b4e1e106681cbf1604bcb44</id>

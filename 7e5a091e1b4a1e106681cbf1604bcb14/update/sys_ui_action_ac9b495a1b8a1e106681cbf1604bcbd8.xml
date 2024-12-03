@@ -30,51 +30,76 @@
         <name>Create De-Duplication Task</name>
         <onclick>getConfigItems()</onclick>
         <order>100</order>
-        <script><![CDATA[function getConfigItems() {
-	var sys_ids = g_list.getChecked().toString();
-	var sys_id_list = sys_ids.split(",");
-	var ci_names = [];
+        <script><![CDATA[/** 
+ * Retrieves selected configuration items, creates a deduplication task, and handles user interaction.
+ *
+ * This function performs the following steps:
+ * 1. Gets the selected CI system IDs
+ * 2. Retrieves CI names or identifiers
+ * 3. Displays a confirmation dialog with selected CIs
+ * 4. If confirmed, creates a deduplication task via AJAX call
+ * 5. Handles the response, showing success or error messages
+ *
+ * @function
+ * @returns {void}
+ * @throws {Error} Throws an error if any step in the process fails
+ */
+function getConfigItems() {
+    /** @type {string} Comma-separated list of selected CI system IDs */
+    var sys_ids = g_list.getChecked().toString();
+    /** @type {string[]} Array of selected CI system IDs */
+    var sys_id_list = sys_ids.split(",");
+    /** @type {string[]} Array to store CI names or identifiers */
+    var ci_names = [];
 
-	try {
-		if(sys_id_list.length > 1) {
-			var ciGr = new GlideRecord('cmdb_ci');
-			ciGr.addQuery('sys_id', 'IN', sys_id_list);
-			ciGr.query();
+    try {
+        if (sys_id_list.length > 1) {
+            /** @type {GlideRecord} GlideRecord for querying CMDB CIs */
+            var ciGr = new GlideRecord('cmdb_ci');
+            ciGr.addQuery('sys_id', 'IN', sys_id_list);
+            ciGr.query();
 
-			while(ciGr.next()) {
-				var res = ciGr.name.toString().trim() || ciGr.serial_number.toString().trim() || ciGr.sys_id.toString().trim();
-				ci_names.push(res);
-			}
+            while (ciGr.next()) {
+                /** @type {string} CI name, serial number, or system ID */
+                var res = ciGr.name.toString().trim() || ciGr.serial_number.toString().trim() || ciGr.sys_id.toString().trim();
+                ci_names.push(res);
+            }
 
-			var confirmationMessage = 'Selected CI\'s (' + sys_id_list.length + '):\n\n';
-			confirmationMessage += ci_names.join('\n');
-			confirmationMessage += '\n\nClick OK to create de-duplication task for these CI\'s.';
+            /** @type {string} Confirmation message with selected CIs */
+            var confirmationMessage = 'Selected CI\'s (' + sys_id_list.length + '):\n\n';
+            confirmationMessage += ci_names.join('\n');
+            confirmationMessage += '\n\nClick OK to create de-duplication task for these CI\'s.';
 
-			var con0 = confirm(confirmationMessage);
+            /** @type {boolean} User's response to the confirmation dialog */
+            var con0 = confirm(confirmationMessage);
 
-			if(con0) {
-				var ga = new GlideAjax('CMDBDeduplicationTaskUtils');
-				ga.addParam('sysparm_name', 'createDeduplicationTask');
-				ga.addParam('sysparm_sysids', sys_ids);
-				ga.getXML(function(deDupAjax0Response) {
-					var answer = deDupAjax0Response.responseXML.documentElement.getAttribute('answer');
-					
-					if(answer == null) {
-						alert('Failed to create De-duplication task. Selected CI\'s are already included in an open De-Duplication task!');
-					} else {
-						var uri = 'reconcile_duplicate_task.do?sys_id=' + answer;
-						var con1 = confirm('The De-duplication task has been created. Click OK to view the task record.');
+            if (con0) {
+                /** @type {GlideAjax} GlideAjax object for AJAX call */
+                var ga = new GlideAjax('CMDBDeduplicationTaskUtils');
+                ga.addParam('sysparm_name', 'createDeduplicationTask');
+                ga.addParam('sysparm_sysids', sys_ids);
+                ga.getXML(function(response) {
+                    /** @type {Object} Parsed response from the server */
+                    var answer = JSON.parse(response.responseXML.documentElement.getAttribute('answer'));
 
-						if(con1) location.href= uri;
-					}
-				});
-			}
-		} else {
-			alert('You must select at least two CI\'s!');
-		}
-	} catch(e) {
-		alert('An error has occurred. Pleaese contact your administrator\n\n' + JSON.stringify(e.message));
-	}
+                    if (answer.status != 200) {
+                        alert(answer.response);
+                    } else {
+                        /** @type {string} URI of the created deduplication task */
+                        var uri = 'reconcile_duplicate_task.do?sys_id=' + answer.response;
+                        /** @type {boolean} User's response to view the created task */
+                        var con1 = confirm('The De-duplication task has been created. Click OK to view the task record.');
+
+                        if (con1) location.href = uri;
+                    }
+                });
+            }
+        } else {
+            alert('You must select at least two CI\'s!');
+        }
+    } catch (e) {
+        alert('An error has occurred. Please contact your administrator\n\n' + JSON.stringify(e.message));
+    }
 }]]></script>
         <show_insert>true</show_insert>
         <show_multiple_update>false</show_multiple_update>
@@ -86,7 +111,7 @@
         <sys_domain>global</sys_domain>
         <sys_domain_path>/</sys_domain_path>
         <sys_id>ac9b495a1b8a1e106681cbf1604bcbd8</sys_id>
-        <sys_mod_count>25</sys_mod_count>
+        <sys_mod_count>33</sys_mod_count>
         <sys_name>Create De-Duplication Task</sys_name>
         <sys_overrides/>
         <sys_package display_value="Deduplicate Task UI Action" source="7e5a091e1b4a1e106681cbf1604bcb14">7e5a091e1b4a1e106681cbf1604bcb14</sys_package>
@@ -94,7 +119,7 @@
         <sys_scope display_value="Deduplicate Task UI Action">7e5a091e1b4a1e106681cbf1604bcb14</sys_scope>
         <sys_update_name>sys_ui_action_ac9b495a1b8a1e106681cbf1604bcbd8</sys_update_name>
         <sys_updated_by>B0BWB</sys_updated_by>
-        <sys_updated_on>2024-12-03 15:12:40</sys_updated_on>
+        <sys_updated_on>2024-12-03 16:55:18</sys_updated_on>
         <table>cmdb_ci</table>
         <ui11_compatible>true</ui11_compatible>
         <ui16_compatible>false</ui16_compatible>
