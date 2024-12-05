@@ -55,30 +55,30 @@ function getConfigItems() {
     try {
         if (sys_id_list.length > 1) {
             /** @type {GlideRecord} GlideRecord for querying CMDB CIs */
-            var ciGr = new GlideRecord('cmdb_ci');
-            ciGr.addQuery('sys_id', 'IN', sys_id_list);
-            ciGr.query();
+            var ci_gr = new GlideRecord('cmdb_ci');
+            ci_gr.addQuery('sys_id', 'IN', sys_id_list);
+            ci_gr.query();
 
-            while (ciGr.next()) {
+            while (ci_gr.next()) {
                 /** @type {string} CI name, serial number, or system ID */
-                var res = ciGr.name.toString().trim() || ciGr.serial_number.toString().trim() || ciGr.sys_id.toString().trim();
+                var res = ci_gr.name.toString().trim() || ci_gr.serial_number.toString().trim() || ci_gr.sys_id.toString().trim();
                 ci_names.push(res);
             }
 
             /** @type {string} Confirmation message with selected CIs */
-            var confirmationMessage = 'Selected CI\'s (' + sys_id_list.length + '):\n\n';
-            confirmationMessage += ci_names.join('\n');
-            confirmationMessage += '\n\nClick OK to create de-duplication task for these CI\'s.';
+            var confirmation_message = 'Selected CI\'s (' + sys_id_list.length + '):\n\n';
+            confirmation_message += ci_names.join('\n');
+            confirmation_message += '\n\nClick OK to create de-duplication task for these CI\'s.';
 
             /** @type {boolean} User's response to the confirmation dialog */
-            var con0 = confirm(confirmationMessage);
+            var con0 = confirm(confirmation_message);
 
             if (con0) {
                 /** @type {GlideAjax} GlideAjax object for AJAX call */
-                var ga = new GlideAjax('CMDBDeduplicationTaskUtils');
-                ga.addParam('sysparm_name', 'createDeduplicationTask');
-                ga.addParam('sysparm_sysids', sys_ids);
-                ga.getXML(function(response) {
+                var dedup_utils_ga = new GlideAjax('IRSCMDBDeduplicationTaskUtils');
+                dedup_utils_ga.addParam('sysparm_name', 'createDeduplicationTask');
+                dedup_utils_ga.addParam('sysparm_sysids', sys_ids);
+                dedup_utils_ga.getXML(function(response) {
                     /** @type {Object} Parsed response from the server */
                     var answer = JSON.parse(response.responseXML.documentElement.getAttribute('answer'));
 
@@ -111,7 +111,7 @@ function getConfigItems() {
         <sys_domain>global</sys_domain>
         <sys_domain_path>/</sys_domain_path>
         <sys_id>ac9b495a1b8a1e106681cbf1604bcbd8</sys_id>
-        <sys_mod_count>33</sys_mod_count>
+        <sys_mod_count>42</sys_mod_count>
         <sys_name>Create De-Duplication Task</sys_name>
         <sys_overrides/>
         <sys_package display_value="Deduplicate Task UI Action" source="7e5a091e1b4a1e106681cbf1604bcb14">7e5a091e1b4a1e106681cbf1604bcb14</sys_package>
@@ -119,7 +119,7 @@ function getConfigItems() {
         <sys_scope display_value="Deduplicate Task UI Action">7e5a091e1b4a1e106681cbf1604bcb14</sys_scope>
         <sys_update_name>sys_ui_action_ac9b495a1b8a1e106681cbf1604bcbd8</sys_update_name>
         <sys_updated_by>B0BWB</sys_updated_by>
-        <sys_updated_on>2024-12-03 16:55:18</sys_updated_on>
+        <sys_updated_on>2024-12-05 19:53:02</sys_updated_on>
         <table>cmdb_ci</table>
         <ui11_compatible>true</ui11_compatible>
         <ui16_compatible>false</ui16_compatible>

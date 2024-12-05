@@ -2,20 +2,20 @@
     <sys_script_include action="INSERT_OR_UPDATE">
         <access>public</access>
         <active>true</active>
-        <api_name>global.CMDBDeduplicationTaskUtils</api_name>
+        <api_name>global.IRSCMDBDeduplicationTaskUtils</api_name>
         <caller_access/>
         <client_callable>true</client_callable>
         <description/>
         <mobile_callable>false</mobile_callable>
-        <name>CMDBDeduplicationTaskUtils</name>
+        <name>IRSCMDBDeduplicationTaskUtils</name>
         <sandbox_callable>false</sandbox_callable>
         <script><![CDATA[/**
  * Utility class for handling CMDB deduplication tasks.
  * @class
  */
-var CMDBDeduplicationTaskUtils = Class.create();
+var IRSCMDBDeduplicationTaskUtils = Class.create();
 
-CMDBDeduplicationTaskUtils.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
+IRSCMDBDeduplicationTaskUtils.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
     /**
      * Creates a deduplication task for the given array of system IDs.
      * If the system IDs belong to different classes, the task creation will fail.
@@ -26,8 +26,8 @@ CMDBDeduplicationTaskUtils.prototype = Object.extendsObject(global.AbstractAjaxP
     createDeduplicationTask: function(arr_sys_ids) {
         try {
             let res = {
-                'status': 400,
-                'response': ''
+                status: 400,
+                response: ''
             };
             const entries = JSUtil.nil(arr_sys_ids) ? this.getParameter('sysparm_sysids') : arr_sys_ids;
             const ci_classes = this._getSelectedCIClasses(entries.split(','));
@@ -38,13 +38,13 @@ CMDBDeduplicationTaskUtils.prototype = Object.extendsObject(global.AbstractAjaxP
             if (unique_arr.length > 1) {
                 res.response = "Failed to create De-duplication task. Selected CI's must be of the same class!";
             } else {
-                const dupTaskUtil = new CMDBDuplicateTaskUtils();
-                const deDupTaskID = dupTaskUtil.createDuplicateTask(entries);
+                const dup_task_util = new CMDBDuplicateTaskUtils();
+                const dedup_task_id = dup_task_util.createDuplicateTask(entries);
 
-                if (deDupTaskID) {
-                    this._updateDeduplicationTask(deDupTaskID, ci_classes);
+                if (dedup_task_id) {
+                    this._updateDeduplicationTask(dedup_task_id, ci_classes);
                     res.status = 200;
-                    res.response = deDupTaskID;
+                    res.response = dedup_task_id;
                 } else {
                     res.response = "Failed to create De-duplication task. Selected CI's are already included in an open De-Duplication task!";
                 }
@@ -52,7 +52,7 @@ CMDBDeduplicationTaskUtils.prototype = Object.extendsObject(global.AbstractAjaxP
 
             return JSON.stringify(res);
         } catch (e) {
-            gs.error('CMDBDeduplicationTaskUtils[createDeduplicationTask]: ' + e);
+            gs.error('IRSCMDBDeduplicationTaskUtils[createDeduplicationTask]: ' + e);
         }
     },
 
@@ -63,8 +63,6 @@ CMDBDeduplicationTaskUtils.prototype = Object.extendsObject(global.AbstractAjaxP
      * @param {Array<string>} arr_classes - An array of classes associated with the task.
      */
     _updateDeduplicationTask: function(str_task_id, arr_classes) {
-        var debug = true;
-
         try {
             const task = JSUtil.nil(str_task_id) ? this.getParameter('sysparm_taskid') : str_task_id;
             const class_arr = JSUtil.nil(arr_classes) ? this.getParameter('sysparm_classes') : arr_classes;
@@ -74,12 +72,12 @@ CMDBDeduplicationTaskUtils.prototype = Object.extendsObject(global.AbstractAjaxP
             const case_class = unique_arr.length > 1 ? 'classes' : 'class';
             const short_desc = 'Duplicate records found in ' + unique_arr.length + ' ' + case_class + ': ' + unique_arr.join(',');
 
-            var deDupGr = new GlideRecord('reconcile_duplicate_task');
-            deDupGr.get(task);
-            deDupGr.setValue('short_description', short_desc);
-            deDupGr.update();
+            var dedup_gr = new GlideRecord('reconcile_duplicate_task');
+            dedup_gr.get(task);
+            dedup_gr.setValue('short_description', short_desc);
+            dedup_gr.update();
         } catch (e) {
-            gs.error('CMDBDeduplicationTaskUtils[updateDeduplicationTask]: ' + e);
+            gs.error('IRSCMDBDeduplicationTaskUtils[updateDeduplicationTask]: ' + e);
         }
     },
 
@@ -103,24 +101,24 @@ CMDBDeduplicationTaskUtils.prototype = Object.extendsObject(global.AbstractAjaxP
 
             return res;
         } catch (e) {
-            gs.error('CMDBDeduplicationTaskUtils[getSelectedCIClasses]: ' + e);
+            gs.error('IRSCMDBDeduplicationTaskUtils[getSelectedCIClasses]: ' + e);
         }
     },
 
-    type: 'CMDBDeduplicationTaskUtils'
+    type: 'IRSCMDBDeduplicationTaskUtils'
 });]]></script>
         <sys_class_name>sys_script_include</sys_class_name>
         <sys_created_by>B0BWB</sys_created_by>
         <sys_created_on>2024-11-25 16:21:31</sys_created_on>
         <sys_id>819f8d5e1b4e1e106681cbf1604bcb44</sys_id>
-        <sys_mod_count>30</sys_mod_count>
-        <sys_name>CMDBDeduplicationTaskUtils</sys_name>
+        <sys_mod_count>33</sys_mod_count>
+        <sys_name>IRSCMDBDeduplicationTaskUtils</sys_name>
         <sys_package display_value="Deduplicate Task UI Action" source="7e5a091e1b4a1e106681cbf1604bcb14">7e5a091e1b4a1e106681cbf1604bcb14</sys_package>
         <sys_policy/>
         <sys_scope display_value="Deduplicate Task UI Action">7e5a091e1b4a1e106681cbf1604bcb14</sys_scope>
         <sys_update_name>sys_script_include_819f8d5e1b4e1e106681cbf1604bcb44</sys_update_name>
         <sys_updated_by>B0BWB</sys_updated_by>
-        <sys_updated_on>2024-12-03 16:53:06</sys_updated_on>
+        <sys_updated_on>2024-12-05 19:48:44</sys_updated_on>
     </sys_script_include>
     <sys_es_latest_script action="INSERT_OR_UPDATE">
         <id>819f8d5e1b4e1e106681cbf1604bcb44</id>
